@@ -32,6 +32,7 @@
  * @file    FRDMKL02Z_Project_UART.c
  * @brief   Application entry point.
  */
+#include <sdk_hal/sdk_hal_uart0.h>
 #include <stdio.h>
 #include "board.h"
 #include "peripherals.h"
@@ -39,9 +40,11 @@
 #include "clock_config.h"
 #include "MKL02Z4.h"
 #include "fsl_debug_console.h"
-
+#include "fsl_gpio.h"
 
 #include "sdk_hal_uart0.h"
+#define BOARD_LED_GPIO BOARD_LED_RED_GPIO
+#define BOARD_LED_GPIO_PIN BOARD_LED_RED_GPIO_PIN
 
 /* TODO: insert other include files here. */
 
@@ -50,6 +53,14 @@
  * @brief   Application entry point.
  */
 int main(void) {
+
+	gpio_pin_config_t led_config = {
+		kGPIO_DigitalOutput, 0,
+		};
+
+	BOARD_InitPins();
+	BOARD_BootClockRUN();
+
   	/* Init board hardware. */
     BOARD_InitBootPins();
     BOARD_InitBootClocks();
@@ -61,6 +72,16 @@ int main(void) {
 
     (void)uart0Inicializar(115200);
 
+    (void)uart0Inicializar(115200);
+
+    GPIO_PinInit(GPIOB, 6U, &led_config);
+
+        //Configura LED VERDE (PTB7) como salida
+    GPIO_PinInit(GPIOB, 7U, &led_config);
+
+        //Configura LED AZUL (PTB10) como salida
+    GPIO_PinInit(GPIOB, 10U, &led_config);
+
     while(1) {
     	status_t status;
     	uint8_t nuevo_byte;
@@ -68,6 +89,24 @@ int main(void) {
     	if(uart0NuevosDatosEnBuffer()>0){
     		status=uart0LeerByteDesdeBufferCircular(&nuevo_byte);
     		if(status==kStatus_Success){
+    			if(nuevo_byte == 0x52){
+                    GPIO_PortClear(GPIOB, 1u << 6U);
+    			}
+    			if(nuevo_byte == 0x72){
+    			    GPIO_PortSet(GPIOB, 1u << 6U);
+    			}
+    			if(nuevo_byte == 0x47){
+    			    GPIO_PortClear(GPIOB, 1u << 7U);
+    			}
+    			if(nuevo_byte == 0x67){
+    			    GPIO_PortSet(GPIOB, 1u << 7U);
+    			}
+    			if(nuevo_byte == 0x41){
+    			    GPIO_PortClear(GPIOB, 1u << 10U);
+    			}
+    			if(nuevo_byte == 0x61){
+    			    GPIO_PortSet(GPIOB, 1u << 10U);
+    			}
     			printf("dato:%c\r\n",nuevo_byte);
     		}else{
     			printf("error\r\n");
@@ -76,3 +115,4 @@ int main(void) {
     }
     return 0 ;
 }
+
